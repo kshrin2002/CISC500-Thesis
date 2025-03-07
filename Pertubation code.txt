@@ -1,0 +1,94 @@
+model = Sequential()
+def calculate_gene_contribution(model, X, sample_index, gene_index, num_steps=100):
+    """
+    Calculate the contribution of a specific gene to the DNN's cancer classification output for a specific sample.
+
+    Parameters:
+    - dnn_model: Trained DNN model for cancer classification.
+    - X: Gene expression data (NumPy array or DataFrame) where rows are samples and columns are genes.
+    - sample_index: Index of the sample to analyze.
+    - gene_index: Index of the gene to evaluate.
+    - num_steps: Number of steps to divide the gene expression range.
+
+    Returns:
+    - contributions: List of DNN output values for each substituted gene expression value.
+    - expression_values: List of substituted gene expression values.
+    """
+
+    # Copy the original sample expression to avoid modifying X
+    sample_expression = X[sample_index].copy()
+    
+    # Get the min and max values for the selected gene across all samples
+    gene_min, gene_max = X[:, gene_index].min(), X[:, gene_index].max()
+    
+    # Generate a range of values for the gene from min to max in equal steps
+    expression_values = np.linspace(gene_min, gene_max, num_steps)
+    contributions = []
+
+    # Calculate DNN output for each value in the generated range
+    for value in expression_values:
+        # Substitute the gene's expression in the sample
+        sample_expression[gene_index] = value
+        # Expand dims to add batch dimension for prediction
+        prediction = model.predict(np.expand_dims(sample_expression, axis=0))
+        # Store the cancer probability output
+        contributions.append(prediction[0][1])  # Assuming class 1 is cancer
+
+    return contributions, expression_values
+
+
+sample_index = 0  # Analyze for the first sample
+gene_index = 5    # Example gene index
+contributions, expression_values = calculate_gene_contribution(model, X, sample_index, gene_index)
+
+
+import matplotlib.pyplot as plt
+plt.plot(expression_values, contributions)
+plt.xlabel("Gene Expression Value")
+plt.ylabel("Cancer Probability")
+plt.title("Gene Contribution to Cancer Probability")
+plt.show()
+
+model=Sequential()
+def calculate_all_gene_contributions(model, X, sample_index, num_steps=100):
+    """
+    Calculate the contribution of each gene to the DNN's cancer classification output for a specific sample.
+
+    Parameters:
+    - dnn_model: Trained DNN model for cancer classification.
+    - X: Gene expression data (NumPy array or DataFrame) where rows are samples and columns are genes.
+    - sample_index: Index of the sample to analyze.
+    - num_steps: Number of steps to divide the gene expression range.
+
+    Returns:
+    - gene_contributions: Dictionary with gene indices as keys and their contribution scores as values.
+    """
+    
+    num_genes = X.shape[1]
+    gene_contributions = {}
+
+    # Loop over each gene
+    for gene_index in range(num_genes):
+        # Calculate contributions for this gene
+        contributions, expression_values = calculate_gene_contribution(model, X, sample_index, gene_index, num_steps)
+        
+        # Calculate the contribution score as the range of cancer probability
+        contribution_score = max(contributions) - min(contributions)
+        
+        # Store the score
+        gene_contributions[gene_index] = contribution_score
+
+    # Sort genes by their contribution score in descending order
+    sorted_contributions = sorted(gene_contributions.items(), key=lambda x: x[1], reverse=True)
+    
+    return sorted_contributions
+
+
+
+sample_index = 0  # Analyze the first sample
+sorted_gene_contributions = calculate_all_gene_contributions(model, X, sample_index)
+
+
+top_genes = sorted_gene_contributions[:10]
+for gene_index, contribution in top_genes:
+    print(f"Gene {gene_index} Contribution Score: {contribution}")
