@@ -21,4 +21,4 @@ This project utilizes publicly available gene expression datasets:
 1. **Preprocessing**: Data cleaning, normalization, and feature engineering.
 2. **Model Development**: Implementing deep neural networks (DNNs) for classification.
 3. **Explainability Analysis**: Using SHAP, LIME, and other techniques to interpret model predictions.
-4. **Validation**: Valudating contributing genes to existing cancer pathway databases.                                       
+4. **Validation**: Validating contributing genes to existing cancer pathway databases.                                       
